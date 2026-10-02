@@ -138,6 +138,18 @@ def save(fig, name: str) -> str:
     return str(path.relative_to(ROOT)).replace("\\", "/")
 
 
+def seeded_protocol(rng: random.Random, message: bytes):
+    """
+    Сеанс протоколу з ключами від генератора із зерном.
+
+    Бібліотечна run_protocol бере ключі з модуля secrets, на який зерно
+    не впливає. Для експериментів потрібна відтворюваність, тож ключі
+    тут генеруються з rng; на сам протокол і атаку це не впливає.
+    """
+    n = len(message)
+    return run_protocol(message, rng.randbytes(n), rng.randbytes(n))
+
+
 def english_text(rng: random.Random, length: int) -> bytes:
     """Фрагмент англійського тексту заданої довжини — для контрольних вимірів."""
     source = (
@@ -155,17 +167,19 @@ def english_text(rng: random.Random, length: int) -> bytes:
 
 def exp_channel(rng: random.Random) -> dict:
     """
-    Кожне окреме перехоплення статистично невідрізнюване від шуму.
+    Окреме перехоплення не зберігає статистики відкритого тексту.
 
-    Беремо найгірший для шифру випадок — текст із нульовою ентропією
+    За незалежного рівномірного ключа m1 = M xor A розподілене рівномірно
+    й не залежить від M — це точна властивість одноразового блокнота.
+    Вимірювання лише ілюструє її на одному прикладі. Беремо найгірший для шифру випадок — текст із нульовою ентропією
     (сама літера «A») — і дивимося, що з ним робить одноразовий ключ.
     Якби хоч одне з трьох повідомлень зберігало статистику відкритого
     тексту, злам був би тривіальним і без протоколу.
     """
     print("[1] Що саме видно в каналі")
     text = b"A" * 240
-    transcript = run_protocol(text)
-    reference = random_key(240)
+    transcript = seeded_protocol(rng, text)
+    reference = rng.randbytes(240)
 
     rows = [
         ("відкритий текст", text),
@@ -204,7 +218,7 @@ def exp_channel(rng: random.Random) -> dict:
     ax2.set_xlim(0, 108)
     _finish(ax2)
 
-    fig.suptitle("Рис. 1. Кожне окреме перехоплення невідрізнюване від шуму",
+    fig.suptitle("Рис. 1. Окреме перехоплення не зберігає статистики тексту",
                  fontsize=12, fontweight="semibold", color=INK)
     fig.tight_layout()
     path = save(fig, "fig1_channel.png")
@@ -235,7 +249,7 @@ def exp_how_many(rng: random.Random, quick: bool) -> dict:
 
     for _ in range(trials):
         text = english_text(rng, length)
-        t = run_protocol(text)
+        t = seeded_protocol(rng, text)
         sent = t.intercepted
         for subset in subsets:
             # Найкраще, що можна зробити з підмножини, — XOR усіх її
@@ -248,10 +262,15 @@ def exp_how_many(rng: random.Random, quick: bool) -> dict:
     table = subset_recovery_table()
     labels = [", ".join("m%d" % (i + 1) for i in s) for s in subsets]
     values = [100.0 * success[s] / trials for s in subsets]
-    # Залишкова невизначеність: якщо текст не відновлюється, він лишається
-    # рівноймовірним серед усіх 2^(8L) варіантів потрібної довжини.
-    uncertainty = [0.0 if recoverable(tuple(MESSAGE_ROWS[i] for i in s), 0b100)
-                   else 8.0 * length for s in subsets]
+    # Частка апріорної невизначеності M, що лишається після перехоплення.
+    # За незалежних рівномірних ключів підмножина, з якої M не
+    # відновлюється, статистично незалежна від M, тож невизначеність не
+    # зменшується зовсім (100 %); інакше вона зникає (0 %). Це справджується
+    # за будь-якого розподілу M. Число 8L біт — лише окремий випадок для
+    # повідомлення, рівномірно вибраного з усіх 2^(8L) рядків.
+    remaining = [0.0 if recoverable(tuple(MESSAGE_ROWS[i] for i in s), 0b100)
+                 else 100.0 for s in subsets]
+    uniform_bits = [8.0 * length * r / 100.0 for r in remaining]
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.4, 4.0))
     x = range(len(subsets))
@@ -269,20 +288,22 @@ def exp_how_many(rng: random.Random, quick: bool) -> dict:
                      ha="center", fontsize=9, color=INK)
     _finish(ax1)
 
-    ax2.bar(x, uncertainty, color=[INK_2 if u else S1 for u in uncertainty],
+    ax2.bar(x, remaining, color=[INK_2 if r else S1 for r in remaining],
             width=0.62, zorder=3)
     ax2.set_xticks(list(x), labels, rotation=18, ha="right")
-    ax2.set_ylabel("залишкова невизначеність тексту, біт")
-    ax2.set_ylim(0, max(uncertainty) * 1.22)
-    for xi, u in zip(x, uncertainty):
-        ax2.annotate("%s" % _n(u, 0), xy=(xi, u), xytext=(0, 4),
+    ax2.set_ylabel("лишається невизначеності M")
+    ax2.yaxis.set_major_formatter(PercentFormatter())
+    ax2.set_ylim(0, 118)
+    for xi, r in zip(x, remaining):
+        ax2.annotate("%s %%" % _n(r, 0), xy=(xi, r), xytext=(0, 4),
                      textcoords="offset points", ha="center",
                      fontsize=9, color=INK)
     _finish(ax2)
 
     fig.suptitle("Рис. 2. Повідомлення відновлюється лише з усіх трьох перехоплень",
                  fontsize=12, fontweight="semibold", color=INK)
-    fig.text(0.995, -0.03, "по %d випробувань на стовпчик; повідомлення по %d байтів"
+    fig.text(0.995, -0.03, "ліворуч — %d сеансів на стовпчик, повідомлення по %d "
+             "байтів; праворуч — модель із незалежними рівномірними ключами"
              % (trials, length), ha="right", fontsize=7.5, color=INK_2)
     fig.tight_layout()
     path = save(fig, "fig2_how_many.png")
@@ -297,7 +318,8 @@ def exp_how_many(rng: random.Random, quick: bool) -> dict:
         "length": length,
         "success_percent": {label: 100.0 * success[s] / trials
                             for s, label in zip(subsets, labels)},
-        "residual_bits": {label: u for label, u in zip(labels, uncertainty)},
+        "remaining_percent": {label: r for label, r in zip(labels, remaining)},
+        "residual_bits_uniform_message": {label: u for label, u in zip(labels, uniform_bits)},
         "recovery_table": table,
     }
 
@@ -447,13 +469,14 @@ def exp_detector(rng: random.Random, quick: bool) -> dict:
 
 def exp_keys_are_fine(rng: random.Random, quick: bool) -> dict:
     """
-    Головне твердження роботи: ключі бездоганні, зламано протокол.
+    Допоміжна перевірка: чи схожі відновлені ключі на випадкові.
 
     Відновлені з офіційних тестів ключі порівнюються з трьома еталонами:
     справді випадковими байтами, англійським текстом і повторюваним
-    ключем (типова помилка «блокнот використали двічі»). Якщо ключі
-    статистично невідрізнювані від випадкових, звинувачувати генератор
-    підстав немає.
+    ключем (типова помилка «блокнот використали двічі»). Дві метрики на
+    дванадцяти коротких ключах можуть показати лише схожість за цими
+    метриками, а не довести випадковість. Головний аргумент інший:
+    формули атаки справджуються за будь-яких ключів, зокрема ідеальних.
     """
     print("[5] Чи винні ключі")
     trials = 400 if not quick else 60
@@ -473,7 +496,7 @@ def exp_keys_are_fine(rng: random.Random, quick: bool) -> dict:
         }
 
     lengths = [len(s) for s in recovered]
-    reference = [random_key(rng.choice(lengths)) for _ in range(trials)]
+    reference = [rng.randbytes(rng.choice(lengths)) for _ in range(trials)]
     english = [english_text(rng, rng.choice(lengths)) for _ in range(trials)]
     repeated = [bytes([rng.randrange(256)] * rng.choice(lengths))
                 for _ in range(trials)]
@@ -508,7 +531,7 @@ def exp_keys_are_fine(rng: random.Random, quick: bool) -> dict:
     ax2.set_yscale("log")
     _finish(ax2)
 
-    fig.suptitle("Рис. 5. Ключі невідрізнювані від випадкових — винен протокол",
+    fig.suptitle("Рис. 5. За використаними метриками ключі схожі на випадкові",
                  fontsize=12, fontweight="semibold", color=INK)
     fig.tight_layout()
     path = save(fig, "fig5_keys.png")
@@ -520,12 +543,12 @@ def exp_keys_are_fine(rng: random.Random, quick: bool) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-#  Експеримент 6 — та сама схема, реалізована правильно
+#  Експеримент 6 — та сама схема на піднесенні до степеня
 # --------------------------------------------------------------------------- #
 
 def exp_shamir(rng: random.Random, quick: bool) -> dict:
     """
-    Зламано реалізацію, а не ідею.
+    Чи спрацює та сама атака проти іншої операції.
 
     Той самий чотирикроковий обмін, але «замком» слугує піднесення до
     степеня за модулем простого числа. Атака з цієї роботи повторюється
@@ -543,7 +566,7 @@ def exp_shamir(rng: random.Random, quick: bool) -> dict:
         text = english_text(rng, 48)
 
         t0 = time.perf_counter()
-        transcript = run_protocol(text)
+        transcript = seeded_protocol(rng, text)
         xor_hits += break_transcript(transcript).message == text
         xor_time += time.perf_counter() - t0
 
@@ -566,7 +589,7 @@ def exp_shamir(rng: random.Random, quick: bool) -> dict:
                     xy=(rect.get_x() + rect.get_width() / 2, value),
                     xytext=(0, 5), textcoords="offset points",
                     ha="center", fontsize=11, color=INK)
-    ax.set_title("Рис. 6. Та сама схема з іншим «замком» атаці не піддається")
+    ax.set_title("Рис. 6. Розглянута атака не спрацювала проти варіанта на степенях")
     _finish(ax, "по %d сеансів; обидва протоколи — чотирикрокові, "
                 "відмінність лише в операції" % trials)
     path = save(fig, "fig6_shamir.png")
@@ -604,14 +627,14 @@ def write_summary(results: dict) -> None:
         "",
         "## Що дає кожна підмножина перехоплень",
         "",
-        "| Перехоплено | Ранг системи над GF(2) | Відновлено повідомлень | Залишкова невизначеність, біт |",
+        "| Перехоплено | Ранг системи над GF(2) | Відновлено повідомлень | Лишається апріорної невизначеності M |",
         "|---|---:|---:|---:|",
     ]
     ranks = {", ".join("m%d" % i for i in row["messages"]): row["rank"]
              for row in how["recovery_table"]}
     for label, percent in how["success_percent"].items():
-        lines.append("| %s | %d | %.1f %% | %.0f |"
-                     % (label, ranks[label], percent, how["residual_bits"][label]))
+        lines.append("| %s | %d | %.1f %% | %.0f %% |"
+                     % (label, ranks[label], percent, how["remaining_percent"][label]))
     lines += [
         "",
         "По %d випробувань на рядок, повідомлення по %d байтів."

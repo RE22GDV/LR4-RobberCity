@@ -165,3 +165,55 @@ def test_two_messages_leave_the_plaintext_undetermined() -> None:
         replay = run_protocol(candidate_text, candidate_alice, candidate_bob)
         assert replay.message1 == m1
         assert replay.message2 == m2
+
+
+# --------------------------------------------------------------------------- #
+#  Точна перевірка: пара перехоплень незалежна від повідомлення
+# --------------------------------------------------------------------------- #
+
+def _mutual_information(observed: tuple[int, ...], p_one: float) -> float:
+    """
+    I(M; спостереження) в однобітовій моделі, обчислена повним перебором.
+
+    Модель: A і B — незалежні рівномірні біти, що не залежать від M;
+    P(M = 1) = ``p_one``. XOR діє на кожен біт окремо, а біти ключів
+    незалежні, тож результат для одного біта переноситься на повідомлення
+    будь-якої довжини.
+    """
+    import itertools
+    import math
+
+    p_message = {0: 1.0 - p_one, 1: p_one}
+    joint: dict[tuple[int, tuple[int, ...]], float] = {}
+    for m, a, b in itertools.product((0, 1), repeat=3):
+        sent = (m ^ a, m ^ a ^ b, m ^ b)
+        key = (m, tuple(sent[i] for i in observed))
+        joint[key] = joint.get(key, 0.0) + p_message[m] * 0.25
+
+    p_obs: dict[tuple[int, ...], float] = {}
+    for (_, obs), prob in joint.items():
+        p_obs[obs] = p_obs.get(obs, 0.0) + prob
+    return sum(prob * math.log2(prob / (p_message[m] * p_obs[obs]))
+               for (m, obs), prob in joint.items() if prob > 0)
+
+
+@pytest.mark.parametrize("p_one", [0.5, 0.1, 0.9])
+@pytest.mark.parametrize("pair", [(0, 1), (0, 2), (1, 2)])
+def test_pair_carries_no_information_for_any_message_distribution(
+    pair: tuple[int, int], p_one: float
+) -> None:
+    """
+    Будь-яка пара перехоплень незалежна від M — за будь-якого розподілу M,
+    а не лише рівномірного. Тобто апріорна невизначеність повідомлення
+    після перехоплення пари не зменшується.
+    """
+    assert abs(_mutual_information(pair, p_one)) < 1e-12
+
+
+@pytest.mark.parametrize("p_one", [0.5, 0.1, 0.9])
+def test_triple_reveals_the_message_completely(p_one: float) -> None:
+    """Три перехоплення несуть усю інформацію про M: I(M; трійка) = H(M)."""
+    import math
+
+    entropy = -sum(p * math.log2(p) for p in (p_one, 1.0 - p_one))
+    assert abs(_mutual_information((0, 1, 2), p_one) - entropy) < 1e-12
