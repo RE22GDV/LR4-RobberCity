@@ -5,7 +5,7 @@
 ### Злам триетапного протоколу обміну, реалізованого на XOR
 
 [![CI](https://github.com/RE22GDV/LR4-RobberCity/actions/workflows/ci.yml/badge.svg)](https://github.com/RE22GDV/LR4-RobberCity/actions/workflows/ci.yml)
-![CodinGame](https://img.shields.io/badge/CodinGame-6%2F6%20офіційних%20тестів-blue)
+![CodinGame](https://img.shields.io/badge/CodinGame-100%25-success)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![C%23](https://img.shields.io/badge/C%23-.NET%208-blueviolet)
 ![Tests](https://img.shields.io/badge/tests-123-success)
@@ -233,14 +233,14 @@ python run.py shamir "The lock idea itself is fine"
 
 | Показник | Значення |
 |---|---|
-| Видимі тести платформи | **6 з 6** (відтворено локально) |
+| **Оцінка валідаторів** | **100 %** |
 | Мова | Python 3 |
-| Код для платформи | [`solution/codingame_solution.py`](solution/codingame_solution.py) |
+| Видимі тести | 6 з 6 |
+| Відправлений код | [`solution/codingame_solution.py`](solution/codingame_solution.py) — алгоритм той самий; у репозиторії до нього додано лише заголовний коментар |
 
-Усі шість офіційних тестів збережено в репозиторії разом з еталонними
-виходами, і розв'язок проходить їх побайтово. Знімки екрана з платформи
-та підсумкову оцінку прихованих валідаторів буде додано до звіту після
-надсилання.
+![Усі тести пройдено](docs/figures/proof_tests.png)
+
+![Оцінка валідаторів 100 %](docs/figures/proof_score.png)
 
 ### 5.2 Офіційні тести в репозиторії
 
@@ -458,9 +458,9 @@ E_a(x) = x^a mod p,    D_a(y) = y^(a⁻¹ mod p−1) mod p,   gcd(a, p−1) = 1
 
 ## 8. Висновки
 
-1. **Задачу розв'язано**: розв'язок відтворює еталонні виходи всіх
-   шести офіційних тестів CodinGame побайтово. Реалізацію продубльовано
-   двома мовами (Python і C#) та покрито **123 тестами**.
+1. **Задачу розв'язано повністю**: пройдено 6 видимих тестів CodinGame,
+   підсумкова оцінка прихованих валідаторів — **100 %**. Реалізацію
+   продубльовано двома мовами (Python і C#) та покрито **123 тестами**.
 
 2. **Злам — це розв'язання системи лінійних рівнянь над GF(2)**, а не
    криптоаналіз у звичному сенсі. Матриця системи має повний ранг, тому
