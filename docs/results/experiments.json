@@ -1,0 +1,326 @@
+{
+  "meta": {
+    "official_cases": 6,
+    "seeds": {
+      "channel": 20261002,
+      "how_many": 4242,
+      "detector": 31337,
+      "keys": 777,
+      "shamir": 99
+    },
+    "quick": false,
+    "total_seconds": 13.629526300002908
+  },
+  "channel": {
+    "figure": "docs/figures/fig1_channel.png",
+    "length": 240,
+    "stats": [
+      {
+        "label": "відкритий текст",
+        "entropy": -0.0,
+        "ioc": 1.0,
+        "printable": 1.0
+      },
+      {
+        "label": "m1 = M xor A",
+        "entropy": 7.103003291413149,
+        "ioc": 0.0039748953974895395,
+        "printable": 0.3625
+      },
+      {
+        "label": "m2 = m1 xor B",
+        "entropy": 7.176376793389969,
+        "ioc": 0.003521617852161785,
+        "printable": 0.38333333333333336
+      },
+      {
+        "label": "m3 = m2 xor A",
+        "entropy": 7.103003291413149,
+        "ioc": 0.004044630404463041,
+        "printable": 0.37916666666666665
+      },
+      {
+        "label": "еталон: випадкові байти",
+        "entropy": 7.219146220500345,
+        "ioc": 0.0033472803347280333,
+        "printable": 0.3875
+      }
+    ]
+  },
+  "how_many": {
+    "figure": "docs/figures/fig2_how_many.png",
+    "trials": 2000,
+    "length": 48,
+    "success_percent": {
+      "m1": 0.0,
+      "m1, m2": 0.0,
+      "m1, m3": 0.0,
+      "m2, m3": 0.0,
+      "m1, m2, m3": 100.0
+    },
+    "residual_bits": {
+      "m1": 384.0,
+      "m1, m2": 384.0,
+      "m1, m3": 384.0,
+      "m2, m3": 384.0,
+      "m1, m2, m3": 0.0
+    },
+    "recovery_table": [
+      {
+        "messages": [
+          1
+        ],
+        "rank": 1,
+        "message_recoverable": false,
+        "recovered": [
+          "M+A"
+        ]
+      },
+      {
+        "messages": [
+          2
+        ],
+        "rank": 1,
+        "message_recoverable": false,
+        "recovered": [
+          "M+A+B"
+        ]
+      },
+      {
+        "messages": [
+          3
+        ],
+        "rank": 1,
+        "message_recoverable": false,
+        "recovered": [
+          "M+B"
+        ]
+      },
+      {
+        "messages": [
+          1,
+          2
+        ],
+        "rank": 2,
+        "message_recoverable": false,
+        "recovered": [
+          "B",
+          "M+A",
+          "M+A+B"
+        ]
+      },
+      {
+        "messages": [
+          1,
+          3
+        ],
+        "rank": 2,
+        "message_recoverable": false,
+        "recovered": [
+          "A+B",
+          "M+B",
+          "M+A"
+        ]
+      },
+      {
+        "messages": [
+          2,
+          3
+        ],
+        "rank": 2,
+        "message_recoverable": false,
+        "recovered": [
+          "A",
+          "M+B",
+          "M+A+B"
+        ]
+      },
+      {
+        "messages": [
+          1,
+          2,
+          3
+        ],
+        "rank": 3,
+        "message_recoverable": true,
+        "recovered": [
+          "B",
+          "A",
+          "A+B",
+          "M",
+          "M+B",
+          "M+A",
+          "M+A+B"
+        ]
+      }
+    ]
+  },
+  "blind": {
+    "figure": "docs/figures/fig3_blind.png",
+    "per_case": [
+      {
+        "label": "Greetings",
+        "winner": "m1 xor m2 xor m3",
+        "correct": true,
+        "scores": {
+          "m1 xor m2 xor m3": -4.789614817139654,
+          "m3": -58.0,
+          "m1 xor m2": -62.0,
+          "m2": -74.0,
+          "m1": -78.0,
+          "m2 xor m3": -78.0,
+          "m1 xor m3": -86.0
+        },
+        "margin": 53.21038518286035
+      },
+      {
+        "label": "Are you sure about that ?",
+        "winner": "m1 xor m2 xor m3",
+        "correct": true,
+        "scores": {
+          "m1 xor m2 xor m3": -4.095413043015315,
+          "m2 xor m3": -57.916666666666664,
+          "m1": -62.08333333333333,
+          "m3": -68.33333333333333,
+          "m1 xor m3": -68.33333333333333,
+          "m2": -74.58333333333333,
+          "m1 xor m2": -74.58333333333333
+        },
+        "margin": 53.82125362365135
+      },
+      {
+        "label": "Hey ! I'm listening",
+        "winner": "m1 xor m2 xor m3",
+        "correct": true,
+        "scores": {
+          "m1 xor m2 xor m3": -4.106883296921922,
+          "m1 xor m3": -61.35135135135135,
+          "m3": -69.45945945945945,
+          "m1 xor m2": -69.45945945945945,
+          "m1": -82.97297297297297,
+          "m2": -82.97297297297297,
+          "m2 xor m3": -82.97297297297297
+        },
+        "margin": 57.244468054429426
+      },
+      {
+        "label": "Not a chance !",
+        "winner": "m1 xor m2 xor m3",
+        "correct": true,
+        "scores": {
+          "m1 xor m2 xor m3": -3.9600592988971823,
+          "m1": -66.09756097560975,
+          "m2 xor m3": -68.53658536585367,
+          "m1 xor m3": -70.97560975609755,
+          "m3": -78.29268292682926,
+          "m2": -80.73170731707317,
+          "m1 xor m2": -80.73170731707317
+        },
+        "margin": 62.13750167671257
+      },
+      {
+        "label": "Who laughs last laughs longest",
+        "winner": "m1 xor m2 xor m3",
+        "correct": true,
+        "scores": {
+          "m1 xor m2 xor m3": -3.373502043689894,
+          "m3": -51.17647058823529,
+          "m2 xor m3": -62.94117647058824,
+          "m1": -68.82352941176471,
+          "m1 xor m2": -74.70588235294117,
+          "m2": -80.58823529411764,
+          "m1 xor m3": -80.58823529411764
+        },
+        "margin": 47.802968544545394
+      },
+      {
+        "label": "THIS is really stupid",
+        "winner": "m1 xor m2 xor m3",
+        "correct": true,
+        "scores": {
+          "m1 xor m2 xor m3": -5.697260460303321,
+          "m2 xor m3": -64.10958904109589,
+          "m1 xor m3": -70.95890410958904,
+          "m2": -73.01369863013699,
+          "m3": -73.69863013698631,
+          "m1": -75.06849315068493,
+          "m1 xor m2": -76.43835616438356
+        },
+        "margin": 58.41232858079257
+      }
+    ],
+    "all_correct": true,
+    "mean_scores": {
+      "m1": -72.17431497406095,
+      "m2": -77.64832459127234,
+      "m3": -66.49342940747394,
+      "m1 xor m2": -72.98645643786512,
+      "m1 xor m3": -73.03457230741482,
+      "m2 xor m3": -69.07949841952957,
+      "m1 xor m2 xor m3": -4.337122159994548
+    },
+    "min_margin": 47.802968544545394,
+    "mean_margin": 55.43815094383194
+  },
+  "detector": {
+    "figure": "docs/figures/fig4_detector.png",
+    "trials": 20000,
+    "length": 60,
+    "false_positive_percent": {
+      "letters_only": 9.425,
+      "quadgrams_only": 0.01,
+      "both": 0.0
+    },
+    "random_bytes_false_positives": 0,
+    "real_texts_detected": 6,
+    "real_texts_total": 6,
+    "thresholds": {
+      "letter_ratio": 0.65,
+      "plausibility": -5.8
+    }
+  },
+  "keys": {
+    "figure": "docs/figures/fig5_keys.png",
+    "groups": {
+      "відновлені ключі": {
+        "entropy": 5.153845385842405,
+        "ioc": 0.0033060906973694797,
+        "chi2": 258.6513120404066,
+        "count": 12,
+        "mean_length": 52.333333333333336
+      },
+      "випадкові байти": {
+        "entropy": 5.192615956451796,
+        "ioc": 0.003875176792230988,
+        "chi2": 255.5082710369417,
+        "count": 400,
+        "mean_length": 54.74
+      },
+      "англійський текст": {
+        "entropy": 3.7562521782138716,
+        "ioc": 0.06428228439555189,
+        "chi2": 1053.4843718214609,
+        "count": 400,
+        "mean_length": 50.7275
+      },
+      "повторюваний байт": {
+        "entropy": 0.0,
+        "ioc": 1.0,
+        "chi2": 13202.625,
+        "count": 400,
+        "mean_length": 51.775
+      }
+    },
+    "trials": 400,
+    "recovered_keys": 12
+  },
+  "shamir": {
+    "figure": "docs/figures/fig6_shamir.png",
+    "trials": 200,
+    "xor_success_percent": 100.0,
+    "shamir_success_percent": 0.0,
+    "xor_ms_per_session": 0.035528499884094344,
+    "shamir_ms_per_session": 58.68888650018562,
+    "modulus_bits": 2048
+  }
+}
